@@ -295,6 +295,39 @@
 let currentMode = 'quick';
 let allResults = [];
 
+// --- Agent Skills Integration ---
+window['ai_edge_gallery_get_result'] = async (data) => {
+  try {
+    const jsonData = JSON.parse(data);
+    const query = jsonData.topic;
+    const mode = jsonData.mode || 'quick';
+    
+    // Update UI state to match agent request
+    document.getElementById('queryInput').value = query;
+    setMode(mode);
+    
+    // Execute search and get data
+    let resultData;
+    if (mode === 'quick') {
+      resultData = await quickSearch(query);
+    } else {
+      resultData = await deepResearch(query);
+    }
+    
+    // Return structured data for LLM synthesis
+    return JSON.stringify({
+      result: typeof resultData === 'string' ? resultData : JSON.stringify(resultData),
+      webview: {
+        url: `index.html?q=${encodeURIComponent(query)}&mode=${mode}`,
+        aspectRatio: 1.33
+      }
+    });
+  } catch (e) {
+    console.error('Agent Skill Error:', e);
+    return JSON.stringify({ error: e.message });
+  }
+};
+
 function setMode(m) {
   currentMode = m;
   document.getElementById('tab-quick').classList.toggle('active', m === 'quick');
@@ -317,6 +350,7 @@ function setStatus(msg, loading = false) {
   const text = document.createElement('span');
   text.textContent = msg;
   statusEl.appendChild(text);
+  console.log(`[Status] ${msg}`);
 }
 
 async function runSearch() {
@@ -340,9 +374,10 @@ async function quickSearch(query) {
     allResults = results;
     renderResults(results);
     setStatus(`Found ${results.length} relevant results`);
+    return results.map(r => `[TITLE]: ${r.title}\n[URL]: ${r.url}\n[SNIPPET]: ${r.snippet}`).join('\n\n');
   } catch (err) {
     setStatus('Search failed, trying Wikipedia...', true);
-    await searchWikipedia(query);
+    return await searchWikipedia(query);
   }
 }
 
@@ -374,7 +409,6 @@ function parseDDGText(text, query) {
   const results = [];
   let i = 0;
 
-  // Strategy 1: Markdown links [Title](URL)
   while (i < lines.length && results.length < 15) {
     const line = lines[i];
     const linkMatch = line.match(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/);
@@ -383,22 +417,18 @@ function parseDDGText(text, query) {
       const rawUrl = linkMatch[2];
       const decodedUrl = decodeDDGUrl(rawUrl);
       
-      // Skip internal navigation links
       if (decodedUrl.includes('duckduckgo.com') && !decodedUrl.includes('uddg=')) {
         i++; continue;
       }
 
-      // Check if we already have this result (often multiple links point to the same result)
       let existing = results.find(r => r.url === decodedUrl);
       const content = linkMatch[1];
 
       if (existing) {
-        // If this is a new piece of info for an existing result (like a snippet)
         if (content.length > (existing.snippet || '').length && !content.includes('.ico') && !content.includes('Image')) {
           existing.snippet = content;
         }
       } else {
-        // New result — the first link is usually the title
         if (content.length > 2 && !content.match(/Image \d+/)) {
           results.push({ 
             title: content.replace(/\*\*/g, ''), 
@@ -408,14 +438,12 @@ function parseDDGText(text, query) {
         }
       }
     } else if (results.length > 0) {
-      // If it's a plain text line after a link, it might be a snippet
       const last = results[results.length - 1];
       if (!last.snippet) last.snippet = line.substring(0, 300);
     }
     i++;
   }
 
-  // Strategy 2: Plain text fallback (Title \n URL)
   if (results.length < 3) {
     let j = 0;
     const urlRegex = /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[^\s]*)?$/i;
@@ -440,18 +468,6 @@ function parseDDGText(text, query) {
     }
   }
 
-  // Strategy 3: Loose URL extraction for any non-DDG links
-  if (results.length < 5) {
-    const urlPattern = /(https?:\/\/[^\s\)]+|[\w-]+\.(com|net|org|io|me|ai|co)(\/[^\s\)]*)?)/gi;
-    const urls = [...text.matchAll(urlPattern)].map(m => m[0]).filter(u => !u.toLowerCase().includes('duckduckgo'));
-    [...new Set(urls)].slice(0, 10).forEach(url => {
-      const fullUrl = url.startsWith('http') ? url : `https://${url}`;
-      if (!results.some(r => r.url === fullUrl)) {
-        results.push({ title: url, url: fullUrl, snippet: '' });
-      }
-    });
-  }
-
   return results;
 }
 
@@ -466,11 +482,12 @@ async function searchWikipedia(query) {
   }));
   allResults = results;
   renderResults(results);
+  return results.map(r => `[WIKI TITLE]: ${r.title}\n[URL]: ${r.url}\n[SNIPPET]: ${r.snippet}`).join('\n\n');
 }
 
 async function deepResearch(query) {
   setStatus('Starting multi-angle research...', true);
-  const angles = [query, `${query} latest developments 2026`, `${query} in-depth analysis`].slice(0, 3);
+  const angles = [query, `${query} latest news`, `${query} technical details`].slice(0, 3);
   
   const container = document.getElementById('results');
   container.innerHTML = `
@@ -500,7 +517,11 @@ async function deepResearch(query) {
   }
 
   renderDeepResults(deepData, contents);
-  setStatus('Research complete. Data ready for synthesis.');
+  setStatus('Research complete.');
+  
+  return `RESEARCH FINDINGS:\n\n` + 
+    deepData.map(d => `Angle: ${d.query}\n` + d.results.map(r => ` - ${r.title} (${r.url})`).join('\n')).join('\n\n') + 
+    `FULL PAGE INSIGHTS:\n\n` + contents.map(c => `URL: ${c.url}\nContent: ${c.content}`).join('\n\n');
 }
 
 async function fetchPage(url) {
@@ -585,7 +606,7 @@ function copyDeep() {
   navigator.clipboard.writeText("DEEP RESEARCH DATA:\n\n" + text).then(() => setStatus("Research data copied!"));
 }
 
-// Auto-run if query params present
+// Auto-run if query params present (for direct webview/manual usage)
 const params = new URLSearchParams(window.location.search);
 if (params.get('q')) {
   document.getElementById('queryInput').value = params.get('q');
