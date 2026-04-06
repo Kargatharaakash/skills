@@ -24,6 +24,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   
   body {
+    display: none; /* Stealth Mode: Hide by default */
     font-family: 'Inter', -apple-system, sans-serif;
     background: var(--bg);
     background-image: 
@@ -605,6 +606,7 @@ function copyDeep() {
 // Auto-run if query params present (for direct webview/manual usage)
 const params = new URLSearchParams(window.location.search);
 if (params.get('q')) {
+  document.body.style.display = 'block'; // Show UI only for manual search
   document.getElementById('queryInput').value = params.get('q');
   if (params.get('mode') === 'deep') setMode('deep');
   runSearch();
