@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internet Search Skill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --card: #16161a;
+    --border: #2a2a32;
+    --primary: #4285f4;
+    --primary-glow: rgba(66, 133, 244, 0.2);
+    --secondary: #0f9d58;
+    --accent: #9c27b0;
+    --text: #e0e0e0;
+    --text-dim: #9ea1a7;
+    --glass: rgba(22, 22, 26, 0.7);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    display: none; /* Stealth Mode: Hide by default */
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    background-image: 
+      radial-gradient(circle at 0% 0%, rgba(66, 133, 244, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 100% 100%, rgba(156, 39, 176, 0.05) 0%, transparent 50%);
+    color: var(--text);
+    padding: 16px;
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+
+  .search-container {
+    background: var(--glass);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 4px;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+
+  .search-container:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+  }
+
+  input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 12px 16px;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .btn-search {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0 20px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.1s;
+  }
+
+  .btn-search:active { transform: scale(0.96); }
+
+  .tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .tab {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    background: rgba(66, 133, 244, 0.1);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .tab.active.deep {
+    background: rgba(156, 39, 176, 0.1);
+    border-color: var(--accent);
+    color: #ce93d8;
+  }
+
+  #status {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .result-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    animation: slideUp 0.4s ease-out backwards;
+    transition: transform 0.2s;
+  }
+
+  .result-card:hover { transform: translateY(-2px); border-color: #444; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--primary);
+    text-decoration: none;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .result-url {
+    font-size: 11px;
+    color: #555;
+    margin-bottom: 8px;
+    word-break: break-all;
+  }
+
+  .result-snippet {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .btn-action {
+    margin-top: 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-action:hover { background: rgba(255,255,255,0.08); border-color: #555; }
+
+  .page-content {
+    background: #050505;
+    border: 1px solid #1a1a1a;
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #aaa;
+    line-height: 1.7;
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    display: none;
+  }
+
+  .copy-bar {
+    position: sticky;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    z-index: 100;
+  }
+
+  .btn-copy-all {
+    width: 100%;
+    background: linear-gradient(to right, #0d1f0d, #1a2a1a);
+    border: 1px solid #2d5a2d;
+    color: #81c784;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  .deep-research-box {
+    background: rgba(156, 39, 176, 0.05);
+    border: 1px solid rgba(156, 39, 176, 0.2);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .deep-research-box h3 {
+    font-size: 14px;
+    color: #ce93d8;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .tag {
+    background: #1a1a2e;
+    color: var(--primary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-right: 6px;
+  }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">🌐</div>
+  <h1>Internet Search Skill</h1>
+</div>
+
+<div class="search-container">
+  <input type="text" id="queryInput" placeholder="Analyze a topic or search the web..." />
+  <button class="btn-search" onclick="runSearch()">Search</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tab-quick" onclick="setMode('quick')">⚡ Quick</div>
+  <div class="tab" id="tab-deep" onclick="setMode('deep')">🔬 Deep Research</div>
+</div>
+
+<div id="status"></div>
+<div id="results"></div>
+
+<script>
+// --- Agent Skills Integration (Defined FIRST for App/Model) ---
+window.ai_edge_gallery_get_result = ai_edge_gallery_get_result;
+
+async function ai_edge_gallery_get_result(data) {
+  try {
+    const jsonData = JSON.parse(data);
+    const query = jsonData.topic;
+    const mode = jsonData.mode || 'quick';
+    
+    // Update UI state to match agent request (if visible)
+    const queryInput = document.getElementById('queryInput');
+    if (queryInput) queryInput.value = query;
+    setMode(mode);
+    
+    // Execute search and get data
+    let resultData;
+    if (mode === 'quick') {
+      resultData = await quickSearch(query);
+    } else {
+      resultData = await deepResearch(query);
+    }
+    
+    // Return structured data for LLM synthesis
+    return JSON.stringify({
+      result: typeof resultData === 'string' ? resultData : JSON.stringify(resultData)
+    });
+  } catch (e) {
+    console.error('Agent Skill Error:', e);
+    return JSON.stringify({ error: e.message });
+  }
+}
+
+let currentMode = 'quick';
+let allResults = [];
+
+function setMode(m) {
+  currentMode = m;
+  document.getElementById('tab-quick').classList.toggle('active', m === 'quick');
+  document.getElementById('tab-deep').classList.toggle('active', m === 'deep');
+  document.getElementById('tab-deep').classList.toggle('deep', m === 'deep');
+}
+
+document.getElementById('queryInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runSearch();
+});
+
+function setStatus(msg, loading = false) {
+  const statusEl = document.getElementById('status');
+  statusEl.innerHTML = '';
+  if (loading) {
+    const spinner = document.createElement('div');
+    spinner.className = 'spinner';
+    statusEl.appendChild(spinner);
+  }
+  const text = document.createElement('span');
+  text.textContent = msg;
+  statusEl.appendChild(text);
+  console.log(`[Status] ${msg}`);
+}
+
+async function runSearch() {
+  const query = document.getElementById('queryInput').value.trim();
+  if (!query) return;
+
+  allResults = [];
+  document.getElementById('results').innerHTML = '';
+
+  if (currentMode === 'quick') {
+    await quickSearch(query);
+  } else {
+    await deepResearch(query);
+  }
+}
+
+async function quickSearch(query) {
+  setStatus(`Searching for "${query}"...`, true);
+  try {
+    const results = await searchDDG(query);
+    allResults = results;
+    renderResults(results);
+    setStatus(`Found ${results.length} relevant results`);
+    return results.map(r => `[TITLE]: ${r.title}\n[URL]: ${r.url}\n[SNIPPET]: ${r.snippet}`).join('\n\n');
+  } catch (err) {
+    setStatus('Search failed, trying Wikipedia...', true);
+    return await searchWikipedia(query);
+  }
+}
+
+async function searchDDG(query) {
+  const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+  const jinaUrl = `https://r.jina.ai/${ddgUrl}`;
+  
+  const res = await fetch(jinaUrl, {
+    headers: { 'Accept': 'text/plain', 'X-Return-Format': 'markdown' }
+  });
+
+  if (!res.ok) throw new Error('Fetch failed');
+  const text = await res.text();
+  return parseDDGText(text, query);
+}
+
+function decodeDDGUrl(url) {
+  try {
+    if (url.includes('uddg=')) {
+      const u = new URL(url).searchParams.get('uddg');
+      return u ? u : url;
+    }
+  } catch(e) {}
+  return url;
+}
+
+function parseDDGText(text, query) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const results = [];
+  let i = 0;
+
+  while (i < lines.length && results.length < 15) {
+    const line = lines[i];
+    const linkMatch = line.match(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/);
+    
+    if (linkMatch) {
+      const rawUrl = linkMatch[2];
+      const decodedUrl = decodeDDGUrl(rawUrl);
+      
+      if (decodedUrl.includes('duckduckgo.com') && !decodedUrl.includes('uddg=')) {
+        i++; continue;
+      }
+
+      let existing = results.find(r => r.url === decodedUrl);
+      const content = linkMatch[1];
+
+      if (existing) {
+        if (content.length > (existing.snippet || '').length && !content.includes('.ico') && !content.includes('Image')) {
+          existing.snippet = content;
+        }
+      } else {
+        if (content.length > 2 && !content.match(/Image \d+/)) {
+          results.push({ 
+            title: content.replace(/\*\*/g, ''), 
+            url: decodedUrl, 
+            snippet: '' 
+          });
+        }
+      }
+    } else if (results.length > 0) {
+      const last = results[results.length - 1];
+      if (!last.snippet) last.snippet = line.substring(0, 300);
+    }
+    i++;
+  }
+
+  if (results.length < 3) {
+    let j = 0;
+    const urlRegex = /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[^\s]*)?$/i;
+    while (j < lines.length - 1 && results.length < 10) {
+      const line = lines[j];
+      const nextLine = lines[j+1];
+      if (nextLine.match(urlRegex) && !nextLine.includes('duckduckgo')) {
+        const url = nextLine.startsWith('http') ? nextLine : `https://${nextLine}`;
+        if (line.length > 3 && !['All Regions', 'Any Time', 'Settings', 'Images'].includes(line)) {
+          if (!results.some(r => r.url === url)) {
+            results.push({ 
+              title: line, 
+              url, 
+              snippet: lines[j+2] && !lines[j+2].match(urlRegex) ? lines[j+2].substring(0, 200) : '' 
+            });
+            j += 2;
+            continue;
+          }
+        }
+      }
+      j++;
+    }
+  }
+
+  return results;
+}
+
+async function searchWikipedia(query) {
+  const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*&srlimit=5`;
+  const res = await fetch(url);
+  const data = await res.json();
+  const results = data.query.search.map(r => ({
+    title: r.title,
+    url: `https://en.wikipedia.org/wiki/${encodeURIComponent(r.title)}`,
+    snippet: r.snippet.replace(/<[^>]+>/g, '')
+  }));
+  allResults = results;
+  renderResults(results);
+  return results.map(r => `[WIKI TITLE]: ${r.title}\n[URL]: ${r.url}\n[SNIPPET]: ${r.snippet}`).join('\n\n');
+}
+
+async function deepResearch(query) {
+  setStatus('Starting multi-angle research...', true);
+  const angles = [query, `${query} latest news`, `${query} technical details`].slice(0, 3);
+  
+  const container = document.getElementById('results');
+  container.innerHTML = `
+    <div class="deep-research-box">
+      <h3>🔬 Deep Research Plan</h3>
+      ${angles.map((q, i) => `<div><span class="tag">angle ${i+1}</span>${q}</div>`).join('')}
+    </div>
+  `;
+
+  let deepData = [];
+  for (let q of angles) {
+    setStatus(`Researching: ${q}...`, true);
+    try {
+      const res = await searchDDG(q);
+      deepData.push({ query: q, results: res.slice(0, 3) });
+    } catch {}
+  }
+
+  setStatus('Reading key documents...', true);
+  const urlsToRead = [...new Set(deepData.flatMap(d => d.results.map(r => r.url)))].slice(0, 3);
+  const contents = [];
+  for (let url of urlsToRead) {
+    try {
+      const c = await fetchPage(url);
+      if (c) contents.push({ url, content: c.substring(0, 2000) });
+    } catch {}
+  }
+
+  renderDeepResults(deepData, contents);
+  setStatus('Research complete.');
+  
+  return `RESEARCH FINDINGS:\n\n` + 
+    deepData.map(d => `Angle: ${d.query}\n` + d.results.map(r => ` - ${r.title} (${r.url})`).join('\n')).join('\n\n') + 
+    `FULL PAGE INSIGHTS:\n\n` + contents.map(c => `URL: ${c.url}\nContent: ${c.content}`).join('\n\n');
+}
+
+async function fetchPage(url) {
+  const res = await fetch(`https://r.jina.ai/${url}`, {
+    headers: { 'Accept': 'text/plain', 'X-Return-Format': 'markdown' }
+  });
+  return res.ok ? await res.text() : null;
+}
+
+function renderResults(results) {
+  const container = document.getElementById('results');
+  if (results.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);">No results found.</div>';
+    return;
+  }
+  container.innerHTML = results.map((r, i) => `
+    <div class="result-card" style="animation-delay: ${i * 0.05}s">
+      <a class="result-title" href="${r.url}" target="_blank">${r.title}</a>
+      <div class="result-url">${r.url}</div>
+      <div class="result-snippet">${r.snippet || 'No preview available.'}</div>
+      <button class="btn-action" onclick="readPage('${r.url.replace(/'/g, "\\'")}', ${i})">
+        <span>📄</span> Read Full Page
+      </button>
+      <div class="page-content" id="page-${i}"></div>
+    </div>
+  `).join('') + `
+    <div class="copy-bar">
+      <button class="btn-copy-all" onclick="copyAll()">📋 Copy results for AI synthesis</button>
+    </div>
+  `;
+}
+
+function renderDeepResults(data, contents) {
+  const container = document.getElementById('results');
+  let html = `<div class="deep-research-box"><h3>🔬 Compiled Findings</h3>`;
+  data.forEach(d => {
+    html += `<div style="margin-bottom:16px"><div style="font-size:12px;color:var(--text-dim);margin-bottom:6px;">${d.query}</div>`;
+    d.results.forEach(r => {
+      html += `<div style="background:rgba(255,255,255,0.03);padding:10px;border-radius:8px;margin-bottom:6px;border:1px solid var(--border)">
+        <div style="font-size:13px;font-weight:600;color:var(--primary)">${r.title}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">${r.url}</div>
+        <div style="font-size:12px;color:#999">${r.snippet}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div>`;
+
+  if (contents.length) {
+    html += `<div class="deep-research-box"><h3>📄 Key Document Content</h3>`;
+    contents.forEach(c => {
+      html += `<div style="margin-bottom:12px">
+        <div style="font-size:10px;color:var(--accent);margin-bottom:4px">${c.url}</div>
+        <div class="page-content" style="display:block;max-height:150px">${c.content}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="copy-bar"><button class="btn-copy-all" onclick="copyDeep()">📋 Copy research for AI synthesis</button></div>`;
+  container.innerHTML += html;
+}
+
+async function readPage(url, idx) {
+  const el = document.getElementById(`page-${idx}`);
+  el.style.display = 'block';
+  el.textContent = 'Loading and cleaning content...';
+  try {
+    const c = await fetchPage(url);
+    el.textContent = c ? c.substring(0, 3000) : 'Content could not be retrieved.';
+  } catch { el.textContent = 'Error fetching content.'; }
+}
+
+function copyAll() {
+  let text = "WEB SEARCH RESULTS:\n\n";
+  allResults.forEach((r, i) => { text += `[${i+1}] ${r.title}\nURL: ${r.url}\n${r.snippet}\n\n`; });
+  navigator.clipboard.writeText(text).then(() => setStatus("Results copied!"));
+}
+
+function copyDeep() {
+  const text = document.getElementById('results').innerText;
+  navigator.clipboard.writeText("DEEP RESEARCH DATA:\n\n" + text).then(() => setStatus("Research data copied!"));
+}
+
+// Auto-run if query params present (for direct webview/manual usage)
+const params = new URLSearchParams(window.location.search);
+if (params.get('q')) {
+  document.body.style.display = 'block'; // Show UI only for manual search
+  document.getElementById('queryInput').value = params.get('q');
+  if (params.get('mode') === 'deep') setMode('deep');
+  runSearch();
+}
+</script>
+</body>
+</html>
