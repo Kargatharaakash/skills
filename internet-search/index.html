@@ -293,18 +293,18 @@
 <div id="results"></div>
 
 <script>
-let currentMode = 'quick';
-let allResults = [];
+// --- Agent Skills Integration (Defined FIRST for App/Model) ---
+window.ai_edge_gallery_get_result = ai_edge_gallery_get_result;
 
-// --- Agent Skills Integration ---
-window['ai_edge_gallery_get_result'] = async (data) => {
+async function ai_edge_gallery_get_result(data) {
   try {
     const jsonData = JSON.parse(data);
     const query = jsonData.topic;
     const mode = jsonData.mode || 'quick';
     
-    // Update UI state to match agent request
-    document.getElementById('queryInput').value = query;
+    // Update UI state to match agent request (if visible)
+    const queryInput = document.getElementById('queryInput');
+    if (queryInput) queryInput.value = query;
     setMode(mode);
     
     // Execute search and get data
@@ -315,7 +315,7 @@ window['ai_edge_gallery_get_result'] = async (data) => {
       resultData = await deepResearch(query);
     }
     
-    // Return structured data for LLM synthesis (No webview/UI returned to avoid "garbage UI")
+    // Return structured data for LLM synthesis
     return JSON.stringify({
       result: typeof resultData === 'string' ? resultData : JSON.stringify(resultData)
     });
@@ -323,7 +323,10 @@ window['ai_edge_gallery_get_result'] = async (data) => {
     console.error('Agent Skill Error:', e);
     return JSON.stringify({ error: e.message });
   }
-};
+}
+
+let currentMode = 'quick';
+let allResults = [];
 
 function setMode(m) {
   currentMode = m;
