@@ -19,14 +19,14 @@ You have access to a webview panel that runs JavaScript. Use it to:
 ### Quick Search
 To search, display the webview with this URL structure:
 ```
-URL: skill.html?q=<encoded_query>&mode=quick
+URL: index.html?q=<encoded_query>&mode=quick
 ```
 The webview will automatically perform the search and show results.
 
 ### Deep Research
 For complex questions needing thorough answers:
 ```
-URL: skill.html?q=<encoded_query>&mode=deep
+URL: index.html?q=<encoded_query>&mode=deep
 ```
 The webview will generate multiple search angles and fetch full page content for synthesis.
 
