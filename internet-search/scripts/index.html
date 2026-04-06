@@ -314,13 +314,9 @@ window['ai_edge_gallery_get_result'] = async (data) => {
       resultData = await deepResearch(query);
     }
     
-    // Return structured data for LLM synthesis
+    // Return structured data for LLM synthesis (No webview/UI returned to avoid "garbage UI")
     return JSON.stringify({
-      result: typeof resultData === 'string' ? resultData : JSON.stringify(resultData),
-      webview: {
-        url: `index.html?q=${encodeURIComponent(query)}&mode=${mode}`,
-        aspectRatio: 1.33
-      }
+      result: typeof resultData === 'string' ? resultData : JSON.stringify(resultData)
     });
   } catch (e) {
     console.error('Agent Skill Error:', e);
