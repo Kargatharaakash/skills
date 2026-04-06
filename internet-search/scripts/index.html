@@ -300,16 +300,21 @@ async function ai_edge_gallery_get_result(data) {
   try {
     const jsonData = JSON.parse(data);
     const query = jsonData.topic;
+    const url = jsonData.url;
     const mode = jsonData.mode || 'quick';
     
     // Update UI state to match agent request (if visible)
     const queryInput = document.getElementById('queryInput');
-    if (queryInput) queryInput.value = query;
+    if (queryInput && query) queryInput.value = query;
+    if (url) document.getElementById('status').textContent = `Reading direct link: ${url}`;
     setMode(mode);
     
-    // Execute search and get data
+    // Execute direct read OR search and get data
     let resultData;
-    if (mode === 'quick') {
+    if (url) {
+      const content = await fetchPage(url);
+      resultData = content || "Error: Could not read content from the provided URL.";
+    } else if (mode === 'quick') {
       resultData = await quickSearch(query);
     } else {
       resultData = await deepResearch(query);

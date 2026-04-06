@@ -8,8 +8,9 @@ description: Search the internet for real-time information, news, or general kno
 ## Instructions
 
 Call the `run_js` tool using `index.html` and a JSON string for `data` with the following fields:
-- **topic**: Required. The search query keywords (e.g., "Aakash Kargathara portfolio", "latest AI news").
-- **mode**: Selection. Use "quick" for rapid search results or "deep" for comprehensive research including full-page content analysis. Defaults to "quick".
+- **topic**: Required (if no `url`). The search query keywords (e.g., "Aakash Kargathara portfolio").
+- **url**: Optional. A specific URL to read directly (e.g., "https://example.com/blog"). If provided, the skill will bypass search and extract full content from this link for high accuracy.
+- **mode**: Selection. Use "quick" for rapid search results or "deep" for comprehensive research. Defaults to "quick".
 
 **Constraints:**
 - Synthesize the findings into a clear, accurate answer with citations (URLs) for each key point.
